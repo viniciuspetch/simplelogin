@@ -4,10 +4,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const { Client } = require("pg");
+const path = require("path");
 
 const port = 8000;
 const app = express();
-const databaseUrl = "/localhost:27017";
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,7 +45,7 @@ verify = function (req, res) {
     .finally(() => client.end());
 };
 
-signUp = function (req, res) {
+signUp = function (req, res) {  
   var username = req.body.username;
   var password = bcrypt.hashSync(req.body.password, 5);
   var client = getClient();
@@ -66,7 +66,8 @@ signUp = function (req, res) {
     })
     .then((dbres) => {
       if (dbres) {
-        res.sendStatus(200);
+        res.status(200);
+        res.redirect("/");
       }
     })
     .catch((err) => {
@@ -77,23 +78,24 @@ signUp = function (req, res) {
 };
 
 login = function (req, res) {
+  console.log(req.body.username, req.body.password);
   var username = req.body.username;
   var password = req.body.password;
   var client = getClient();
   client
     .connect()
     .then(() =>
-      client.query("SELECT * FROM username WHERE username = $1", [username])
+      client.query("SELECT * FROM users WHERE username = $1", [username])
     )
     .then((dbres) => {
       if (!dbres.rows[0]) {
         res.sendStatus(401);
       } else {
-        if (!bcrypt.compareSync(password, dbres.rows[0].pswd)) {
+        if (!bcrypt.compareSync(password, dbres.rows[0].password)) {
           res.sendStatus(401);
         } else {
           res.json({
-            token: jsonwebtoken.sign({ username }, "nodejs"),
+            token: jwt.sign({ username }, "nodejs"),
           });
         }
       }
@@ -105,7 +107,14 @@ login = function (req, res) {
     .finally(() => client.end());
 };
 
-app.post("/signup", signUp);
+app.get("/", (req, res) => res.sendFile(path.join(__dirname + "/index.html")));
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname + "/login.html"))
+);
 app.post("/login", login);
+app.get("/signup", (req, res) =>
+  res.sendFile(path.join(__dirname + "/signup.html"))
+);
+app.post("/signup", signUp);
 
 app.listen(port, () => console.log("Working at " + port));
