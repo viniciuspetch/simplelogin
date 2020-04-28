@@ -18,13 +18,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 getClient = function () {
-  return new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-  });
+  if (process.env.DATABASE_URL) {
+    return new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: true,
+    });
+  } else {
+    return new Client({
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_DATABASE,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT,
+    });
+  }
 };
 
 profile = function (req, res) {
