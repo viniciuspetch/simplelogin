@@ -5,13 +5,17 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const { Client } = require("pg");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
+const secret = "nodejs";
 const port = 8000;
+
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 getClient = function () {
   return new Client({
@@ -24,7 +28,7 @@ getClient = function () {
 };
 
 verify = function (req, res) {
-  var username = jsonwebtoken.verify(token, secret).username;
+  var username = jwt.verify(res.locals.token, secret);
   var client = getClient();
   client
     .connect()
@@ -93,7 +97,7 @@ login = function (req, res) {
         if (!bcrypt.compareSync(password, dbres.rows[0].password)) {
           res.sendStatus(401);
         } else {
-          var token = jwt.sign({ username, expiration: Date.now()+86400000 }, "nodejs");
+          var token = jwt.sign({ username }, secret, { expiresIn: "1d" });
           res.cookie("token", token);
           res.json({
             token,
@@ -117,5 +121,24 @@ app.get("/signup", (req, res) =>
   res.sendFile(path.join(__dirname + "/signup.html"))
 );
 app.post("/signup", signUp);
+app.get("/verify", (req, res) =>
+  res.sendFile(path.join(__dirname + "/verify.html"))
+);
+app.post(
+  "/verifyBody",
+  (req, res, next) => {
+    res.locals.token = req.body.token;
+    next();
+  },
+  verify
+);
+app.post(
+  "/verifyCookie",
+  (req, res, next) => {
+    res.locals.token = req.cookies.token;
+    next();
+  },
+  verify
+);
 
 app.listen(port, () => console.log("Working at " + port));

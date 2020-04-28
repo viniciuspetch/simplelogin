@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="author" content="">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <a href="/">Home</a>
+    <h3>Verify token manually</h3>
+    <form action="/verifyBody" method="POST">
+        <label for="token">Token</label>
+        <input type="text" name="token" id="token">
+        <input type="submit" value="Verify manually">
+    </form>
+    <h3>Verify token on cookies</h3>
+    <form action="/verifyCookie" method="POST">
+        <input type="submit" value="Verify on cookies">
+    </form>
+
+</body>
+
+</html>
