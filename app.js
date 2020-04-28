@@ -27,8 +27,8 @@ getClient = function () {
   });
 };
 
-verify = function (req, res) {
-  var username = jwt.verify(res.locals.token, secret);
+profile = function (req, res) {
+  var username = jwt.verify(res.locals.token, secret).username;
   var client = getClient();
   client
     .connect()
@@ -36,7 +36,29 @@ verify = function (req, res) {
       client.query("SELECT * from users WHERE username=$1", [username])
     )
     .then((dbres) => {
-      if (dbres.rows[0] != undefined) {
+      if (!dbres.rows[0]) {
+        res.sendStatus(401);
+        return null;
+      }
+      res.json({ username, id: dbres.rows[0].id });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(512);
+    })
+    .finally(() => client.end());
+};
+
+verify = function (req, res) {
+  var username = jwt.verify(res.locals.token, secret).username;
+  var client = getClient();
+  client
+    .connect()
+    .then(() =>
+      client.query("SELECT * from users WHERE username=$1", [username])
+    )
+    .then((dbres) => {
+      if (!dbres.rows[0]) {
         res.sendStatus(401);
         return null;
       }
@@ -139,6 +161,26 @@ app.post(
     next();
   },
   verify
+);
+
+app.get("/profile", (req, res) =>
+  res.sendFile(path.join(__dirname + "/profile.html"))
+);
+app.post(
+  "/profileBody",
+  (req, res, next) => {
+    res.locals.token = req.body.token;
+    next();
+  },
+  profile
+);
+app.post(
+  "/profileCookie",
+  (req, res, next) => {
+    res.locals.token = req.cookies.token;
+    next();
+  },
+  profile
 );
 
 app.listen(port, () => console.log("Working at " + port));
