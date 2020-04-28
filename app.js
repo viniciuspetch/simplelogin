@@ -45,7 +45,7 @@ verify = function (req, res) {
     .finally(() => client.end());
 };
 
-signUp = function (req, res) {  
+signUp = function (req, res) {
   var username = req.body.username;
   var password = bcrypt.hashSync(req.body.password, 5);
   var client = getClient();
@@ -78,7 +78,6 @@ signUp = function (req, res) {
 };
 
 login = function (req, res) {
-  console.log(req.body.username, req.body.password);
   var username = req.body.username;
   var password = req.body.password;
   var client = getClient();
@@ -94,8 +93,10 @@ login = function (req, res) {
         if (!bcrypt.compareSync(password, dbres.rows[0].password)) {
           res.sendStatus(401);
         } else {
+          var token = jwt.sign({ username, expiration: Date.now()+86400000 }, "nodejs");
+          res.cookie("token", token);
           res.json({
-            token: jwt.sign({ username }, "nodejs"),
+            token,
           });
         }
       }
