@@ -6,8 +6,8 @@ const cors = require("cors");
 const { Client } = require("pg");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+require("dotenv").config();
 
-const secret = "nodejs";
 const port = 8000;
 
 const app = express();
@@ -19,16 +19,16 @@ app.use(cookieParser());
 
 getClient = function () {
   return new Client({
-    user: "postgres",
-    host: "localhost",
-    database: "simplelogin",
-    password: "postgres",
-    port: "5432",
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_DATABASE,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
   });
 };
 
 profile = function (req, res) {
-  var username = jwt.verify(res.locals.token, secret).username;
+  var username = jwt.verify(res.locals.token, process.env.SECRET).username;
   var client = getClient();
   client
     .connect()
@@ -50,7 +50,7 @@ profile = function (req, res) {
 };
 
 verify = function (req, res) {
-  var username = jwt.verify(res.locals.token, secret).username;
+  var username = jwt.verify(res.locals.token, process.env.SECRET).username;
   var client = getClient();
   client
     .connect()
@@ -119,7 +119,9 @@ login = function (req, res) {
         if (!bcrypt.compareSync(password, dbres.rows[0].password)) {
           res.sendStatus(401);
         } else {
-          var token = jwt.sign({ username }, secret, { expiresIn: "1d" });
+          var token = jwt.sign({ username }, process.env.SECRET, {
+            expiresIn: "1d",
+          });
           res.cookie("token", token);
           res.json({
             token,
@@ -183,4 +185,4 @@ app.post(
   profile
 );
 
-app.listen(port, () => console.log("Working at " + port));
+app.listen(process.env.PORT || port, () => console.log("Server is ready"));
