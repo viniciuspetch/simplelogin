@@ -21,7 +21,6 @@ getClient = function () {
   if (process.env.DATABASE_URL) {
     return new Client({
       connectionString: process.env.DATABASE_URL,
-      ssl: true,
     });
   } else {
     return new Client({
